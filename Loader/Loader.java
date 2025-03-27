@@ -18,7 +18,7 @@ import com.example.openglexemple.ColladaParser.ColladaDataHandler;
 import com.example.openglexemple.GraphicObjects.Material;
 import com.example.openglexemple.GraphicObjects.Mesh;
 import com.example.openglexemple.PolygonParser;
-import Saver;
+import com.example.openglexemple.Utils.Saver;
 import com.example.openglexemple.GameObjects.SolidModel;
 import com.example.openglexemple.Utils;
 import com.example.openglexemple.WavefrontParser;
