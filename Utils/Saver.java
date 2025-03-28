@@ -108,6 +108,14 @@ public class Saver {
         }
     }
 
+    public void addKeyFrames(KeyFrame[] keyFrames){
+        for(int i = 0 ; i<keyFrames.length; i++) {
+            stringBuilder.append("keyFrame ").append(i).append(" ");
+            stringBuilder.append(keyFrames[i]);
+            stringBuilder.append("\n");
+        }
+    }
+    
     public String getVerticesString(){
         return stringBuilder.toString();
     }
