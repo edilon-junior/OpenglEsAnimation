@@ -216,23 +216,23 @@ public class Quaternion {
         final float yy = y * y;
         final float zz = z * z;
         matrix[0] = 1 - 2 * (yy + zz);
-        matrix[4] = 2 * (xy - zw);
-        matrix[8] = 2 * (xz + yw);
-        matrix[12] = 0;
-
-        matrix[1] = 2 * (xy + zw);
-        matrix[5] = 1 - 2 * (xx + zz);
-        matrix[9] = 2 * (yz - xw);
-        matrix[13] = 0;
-
-        matrix[2] = 2 * (xz - yw);
-        matrix[6] = 2 * (yz + xw);
-        matrix[10] = 1 - 2 * (xx + yy);
-        matrix[14] = 0;
-
+        matrix[1] = 2 * (xy - zw);
+        matrix[2] = 2 * (xz + yw);
         matrix[3] = 0;
+
+        matrix[4] = 2 * (xy + zw);
+        matrix[5] = 1 - 2 * (xx + zz);
+        matrix[6] = 2 * (yz - xw);
         matrix[7] = 0;
+
+        matrix[8] = 2 * (xz - yw);
+        matrix[9] = 2 * (yz + xw);
+        matrix[10] = 1 - 2 * (xx + yy);
         matrix[11] = 0;
+
+        matrix[12] = 0;
+        matrix[13] = 0;
+        matrix[14] = 0;
         matrix[15] = 1;
         return matrix;
     }
@@ -255,64 +255,28 @@ public class Quaternion {
         if (diagonal > 0) {
             float w4 = (float) (Math.sqrt(diagonal + 1f) * 2f);
             w = w4 / 4f;
-            x = (matrix[6] - matrix[9]) / w4;
-            y = (matrix[8] - matrix[2]) / w4;
-            z = (matrix[1] - matrix[4]) / w4;
+            x = (matrix[9] - matrix[6]) / w4;
+            y = (matrix[2] - matrix[8]) / w4;
+            z = (matrix[4] - matrix[1]) / w4;
         } else if ((matrix[0] > matrix[5]) && (matrix[0] > matrix[10])) {
             float x4 = (float) (Math.sqrt(1f + matrix[0] - matrix[5] - matrix[10]) * 2f);
-            w = (matrix[6] - matrix[9]) / x4;
+            w = (matrix[9] - matrix[6]) / x4;
             x = x4 / 4f;
-            y = (matrix[4] + matrix[1]) / x4;
-            z = (matrix[8] + matrix[2]) / x4;
+            y = (matrix[1] + matrix[4]) / x4;
+            z = (matrix[2] + matrix[8]) / x4;
         } else if (matrix[5] > matrix[10]) {
             float y4 = (float) (Math.sqrt(1f + matrix[5] - matrix[0] - matrix[10]) * 2f);
-            w = (matrix[8] - matrix[2]) / y4;
-            x = (matrix[4] + matrix[1]) / y4;
+            w = (matrix[2] - matrix[8]) / y4;
+            x = (matrix[1] + matrix[4]) / y4;
             y = y4 / 4f;
-            z = (matrix[9] + matrix[6]) / y4;
+            z = (matrix[6] + matrix[9]) / y4;
         } else {
             float z4 = (float) (Math.sqrt(1f + matrix[10] - matrix[0] - matrix[5]) * 2f);
-            w = (matrix[1] - matrix[4]) / z4;
-            x = (matrix[8] + matrix[2]) / z4;
-            y = (matrix[9] + matrix[6]) / z4;
+            w = (matrix[4] - matrix[1]) / z4;
+            x = (matrix[2] + matrix[8]) / z4;
+            y = (matrix[6] + matrix[9]) / z4;
             z = z4 / 4f;
         }
         return new float[]{x, y, z, w};
-    }
-
-    public static Quaternion createQuaternion(float[] matrix){
-        Quaternion res = new Quaternion();
-        if(matrix[10] < 0){
-            if(matrix[0] > matrix[5]) {
-                float x = 1 + matrix[0] - matrix[5] - matrix[10];
-                float y = matrix[4] + matrix[1];
-                float z = matrix[2] + matrix[8];
-                float w = matrix[9] - matrix[6];
-                res.set(x, y, z, w);
-            }else {
-                float x = matrix[4] + matrix[1];
-                float y = 1 - matrix[0] + matrix[5] - matrix[10];
-                float z = matrix[9] + matrix[6];
-                float w = matrix[2] - matrix[8];
-                res.set(x, y, z, w);
-            }
-        }else{
-            if(matrix[0] < -matrix[5]){
-                float x = matrix[2] + matrix[8];
-                float y = matrix[9] + matrix[6];
-                float z = 1 - matrix[0] - matrix[5] + matrix[10];
-                float w = matrix[4] - matrix[1];
-                res.set(x,y,z,w);
-            }else{
-                float x = matrix[9] - matrix[6];
-                float y = matrix[2] - matrix[8];
-                float z = matrix[4] - matrix[10];
-                float w = 1 + matrix[0] + matrix[5] + matrix[10];
-                res.set(x,y,z,w);
-            }
-        }
-        res.multiply(0.5f / res.length());
-        res.normalize();
-        return res;
     }
 }
