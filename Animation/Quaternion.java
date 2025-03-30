@@ -7,12 +7,10 @@ import com.example.openglexemple.Math.Vector3f;
 public class Quaternion {
 
     public static final String TAG = "QUATERNION";
-
     public float w;
     public float x;
     public float y;
     public float z;
-
     private boolean normalized;
 
     public Quaternion(float x, float y, float z, float w ){
