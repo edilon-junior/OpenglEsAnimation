@@ -152,17 +152,11 @@ public class DynamicModel extends GameObject {
                 shaderProgram.passIntUniforms(DYNAMIC_INT_UNIFORMS,
                         new  int[]{material.getSample2Did()[0]});
 
-
-                float[] bindShapeMatrix = new float[]{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
-                if(animation != null){
-                    bindShapeMatrix = animation.getBindShapeMatrix();
-                }
-
                 shaderProgram.passFloatUniforms(DYNAMIC_FLOAT_UNIFORMS,
                         transformation.getViewMatrix(), mMVPMatrix,
                         light.getLightPosInEyeSpace(), light.getLightColor(),
                         camera.getPosition().toFloat(), material.getEmission(),
-                        material.getRefraction(), scene.getIorAmbient(), bindShapeMatrix
+                        material.getRefraction(), scene.getIorAmbient()
                         );
 
                 //pass animation joints transforms
