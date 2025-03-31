@@ -31,6 +31,7 @@ public class MyRenderer implements GLSurfaceView.Renderer
     int windowWidth;
     int windowHeght;
     private MousePicker mousePicker;
+    int wait = 0;
     public MyRenderer(final Context activityContext)
     {
         ///mActivityContext = activityContext;
@@ -142,13 +143,18 @@ public class MyRenderer implements GLSurfaceView.Renderer
                 dynamicModel.render(scene, transformation, scene.getCamera());
                 scene.getGameObjectsMap().put(dynamicModel.getName(), dynamicModel);
             }
-
+            scene.getDynamicProgram().stop();
+            
             if(input.isTouch()){
                 System.out.println(TAG+" touch!");
             }
-
-            scene.getDynamicProgram().stop();
-            input.cleanup();
+           
+            if(wait == 1) {
+                input.cleanup();
+                wait = 0;
+            }else{
+                wait++;
+            }
             lastLoopTime += MILLISECONDS_PER_FRAME;
             loops++;
         }
