@@ -182,23 +182,39 @@ public class Animation {
      *         current pose. They are returned in a map, indexed by the name of
      *         the joint to which they should be applied.
      */
-    private Map<String, float[]> interpolatePoses(KeyFrame previousFrame, KeyFrame nextFrame, float progression) {
-        Map<String, float[]> currentPose = new HashMap<>();
-        for (String jointId : previousFrame.getJointKeyFrames().keySet()) {
-            JointTransform previousTransform = previousFrame.getJointKeyFrames().get(jointId);
-            JointTransform nextTransform = nextFrame.getJointKeyFrames().get(jointId);
+    public void applyPoseToJoints(Map<String, float[]> currentPose, Joint joint, float[] parentTransform, float[][] test, Skeleton skeleton) {
+        float[] currentLocalTransform = currentPose.get(joint.getId());
+        float[] currentTransform = new float[16];
 
-            float[] poseMatrix = new float[16];
-            if(previousTransform != null && nextTransform != null) {
-                JointTransform currentTransform = JointTransform.interpolate(previousTransform, nextTransform, progression);
-                poseMatrix = currentTransform.getLocalTransform();
+        if(currentLocalTransform == null){
+            Joint j = skeleton.getJoints().get(joint.getId());
+            if(j != null){
+                currentLocalTransform = j.getTransformMatrix();
             }else {
-                Matrix.setIdentityM(poseMatrix, 0);
+                currentLocalTransform = new float[16];
+                Matrix.setIdentityM(currentLocalTransform, 0);
             }
-            currentPose.put(jointId, poseMatrix);
         }
-        return currentPose;
+
+        //if(joint.getId().endsWith("ik")){
+          //  currentLocalTransform = new float[16];
+           // Matrix.setIdentityM(currentLocalTransform,0);
+        //}
+        Matrix.multiplyMM(currentTransform, 0,parentTransform, 0, currentLocalTransform, 0);
+
+        for (Joint childJoint : joint.getChildren()) {
+            applyPoseToJoints(currentPose, childJoint, currentTransform, test, skeleton);
+        }
+        
+        float[] rootIbmXpose = new float[16];
+        float[] mposeXibm= new float[16];
+        Matrix.multiplyMM(rootIbmXpose, 0, skeleton.getRootJoint().getIBM(), 0, currentTransform, 0);
+        Matrix.multiplyMM(poseXibm,0, rootIbmXpose, 0, joint.getIBM(), 0);
+
+        //joint.setAnimatedTransform(totalTransform);
+        test[joint.getIndex()]= poseXibm;
     }
+
 
     public void applyPoseToJoints(Map<String, float[]> currentPose, Joint joint, float[] parentTransform, float[][] test, float[] rootIBM) {
         float[] currentLocalTransform = currentPose.get(joint.getId());
