@@ -228,14 +228,26 @@ public class Scene {
             go.setAngularVelocity(0);
             go.setLinearVelocity(1,1,1);
             go.setUpdateByTime(true);
+            //............setup button bonds..............
             Messenger touch = new Messenger(Constants.INFO_TOUCHED);
             float[] btnUpTranslation = new float[]{0,0,go.getLinearVelocity().z};
             Messenger translation = new Messenger(Constants.DO_TRANSLATE);
             Messenger[] bondsBtnUp = new Messenger[]{touch, null, translation, new Messenger(btnUpTranslation)};
             go.setParentBonds(btnUp.getName(), bondsBtnUp);
+            //.............................................
             float[] btnDownTranslation = new float[]{0,0,-go.getLinearVelocity().z};
             Messenger[] bondsBtnDown = new Messenger[]{touch, null, translation, new Messenger(btnDownTranslation)};
             go.setParentBonds(btnDown.getName(), bondsBtnDown);
+            //.............................................
+             Messenger rotate = new Messenger(Constants.DO_ROTATE);
+            float[] btnRightRotation = new float[]{10, 1, 0, 0};
+            Messenger[] bondsBtnRight = new Messenger[]{touch, null, rotate, new Messenger(btnRightRotation)};
+            go.setParentBonds(btnRight.getName(), bondsBtnRight);
+            //.............................................
+            float[] btnLeftRotation = new float[]{-10, 1,0,0};
+            Messenger[] bondsBtnLeft = new Messenger[]{touch, null, rotate, new Messenger(btnLeftRotation)};
+            go.setParentBonds(btnLeft.getName(), bondsBtnLeft);
+            //.............................................
             getDynamicModelList().add(go);
         }
 
