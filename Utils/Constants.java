@@ -90,7 +90,7 @@ public class Constants {
     public static final String[] DYNAMIC_FLOAT_UNIFORMS = new String[]{
             UNIFORM_MV_MATRIX, UNIFORM_MVP_MATRIX,
             UNIFORM_LIGHT_POS, UNIFORM_LIGHT_COLOR, UNIFORM_VIEW_POS,
-            UNIFORM_EMISSION, UNIFORM_IOR_AMBIENT, UNIFORM_IOR, UNIFORM_BS_MATRIX
+            UNIFORM_EMISSION, UNIFORM_IOR_AMBIENT, UNIFORM_IOR
     };
 
     public static final String[] DYNAMIC_INT_UNIFORMS = new String[]{
