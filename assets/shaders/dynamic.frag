@@ -7,8 +7,9 @@ uniform vec3 u_ViewPos;
 
 uniform vec3 u_Emission;
 uniform sampler2D u_DiffuseMap;
-uniform float u_Ior;
+uniform float u_Ambient;
 uniform float u_IorAmbient;
+uniform float u_Ior;
 
 in vec3 oi_Position;
 in vec2 oi_TexCoordinate;
@@ -30,36 +31,26 @@ vec3 projection(vec3 a, vec3 b){
 
 void main()
 {
-    // ambient
-    vec3 ambient = u_LightColor * texture(u_DiffuseMap, oi_TexCoordinate).rgb;
+    float lightDistance = length(u_LightPos - oi_Position.xyz);
+
+    //ambient
+    float ambient = u_Ambient;
 
     //diffuse
     vec3 norm = normalize(oi_Normal);
     vec3 lightDirection = normalize(u_LightPos - oi_Position);
-    float diff = max(dot(norm, lightDirection), 0.0);
-    vec3 diffuse =  diff * texture(u_DiffuseMap, oi_TexCoordinate).rgb;
+    float diffuse = max(dot(norm, lightDirection), 0.0);
+    //add attenuation
+    diffuse = diffuse * (1.0 / (1.0 + (0.10 * lightDistance)));
 
     //specular
+    float specularStrength = 1.0 - u_Ior;
     vec3 viewDir = normalize(u_ViewPos - oi_Position);
     vec3 reflectDir = reflect(-lightDirection, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0),2.0);
-    vec3 specular = spec * texture(u_DiffuseMap, oi_TexCoordinate).rgb;
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 2.0);
+    float specular = specularStrength * spec;
 
-    // attenuation
-    vec3 distance   = u_LightPos - oi_Position;
-    vec3 direction  = projection(distance, oi_Normal);
-    vec3 light_radius = distance - direction;
-    float radius_length = length(light_radius);
-    // standard deviation
-    float s = 2.25;
-    // expectation
-    float e = 0.0;
-    float attenuation = (SDP / s) * exp(-0.5*pow(((radius_length - e)/s),2.0));
-    //ambient  * attenuation;
-    //diffuse  * attenuation;
-    //specular * attenuation;
-
-    //vec3 result = u_LightColor * (ambient + diffuse + specular) + u_Emission;
-    vec4 result = texture(u_DiffuseMap, oi_TexCoordinate)*oi_Color+vec4(diffuse,1.0);
+    vec3 color = u_LightColor * (ambient + diffuse + specular) + u_Emission;
+    vec4 result = texture(u_DiffuseMap, oi_TexCoordinate)*vec4(color, 1.0);
     o_FragColor = result;
 }
