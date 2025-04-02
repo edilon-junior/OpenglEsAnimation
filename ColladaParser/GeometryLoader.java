@@ -1,17 +1,18 @@
-package com.example.openglexemple.ColladaParser;
+package com.example.openglexemple.Loader.ColladaParser;
 
 import android.opengl.Matrix;
 
-import com.example.openglexemple.Constants;
+import com.example.openglexemple.Utils.Constants;
 import com.example.openglexemple.GraphicObjects.Mesh;
-import com.example.openglexemple.Utils;
-import com.example.openglexemple.XmlParser.XmlNode;
+import com.example.openglexemple.Utils.Utils;
+import com.example.openglexemple.Loader.XmlParser.XmlNode;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class GeometryLoader {
 
+    private static final float[] CORRECTION = new float[16];
     XmlNode geometry;
     XmlNode meshNode;
     XmlNode trianglesNode;
@@ -32,18 +33,17 @@ public class GeometryLoader {
     int vertexStride = 0;
     private float[] bindShapeMatrix;
 
-    public GeometryLoader(XmlNode geometry, float[][] jointIds, float[][] weights){
+    public GeometryLoader(XmlNode geometry, float[][] jointIds, float[][] weights, float[] bindShapeMatrix){
         this.geometry = geometry;
+        this.bindShapeMatrix = bindShapeMatrix;
         meshNode = geometry.getChild("mesh");
         meshName = geometry.getAttribute("name");
         trianglesNode = meshNode.getChild("triangles");
         this.jointIds = jointIds;
         this.weights = weights;
         vertexStride = 14;
-    }
-
-    public void setBindShapeMatrix(float[] bindShapeMatrix){
-        this.bindShapeMatrix = bindShapeMatrix;
+        Matrix.setIdentityM(CORRECTION,0);
+        Matrix.rotateM(CORRECTION, 0, (float) Math.toRadians(-90), 1.0f, 0.0f, 0.0f);
     }
 
     public Mesh createMesh(){
@@ -51,7 +51,16 @@ public class GeometryLoader {
         assembleVertices();
         convertIndicesListToArray();
         createVertexArray();
-        return new Mesh(positions, textures, normals, colors,vertexArray, indices);
+        Mesh mesh = new Mesh(positions, textures, normals, colors,vertexArray, indices);
+        mesh.setName(meshName);
+        mesh.setSemantics(semantics);
+        mesh.setMaterialId(materialId);
+        mesh.setVertexStrider(vertexStride);
+        mesh.setHomogeneous(true);
+        if(jointIds != null){
+            mesh.setMaxInfluences(Constants.MAX_INTERACTIONS);
+        }
+        return mesh;
     }
 
     private void readMeshData(){
@@ -155,7 +164,7 @@ public class GeometryLoader {
     }
     private void createVertexArray(){
         int mod = 0;
-        if(jointIds.length > 0) {
+        if(jointIds!= null) {
             vertexStride += Constants.MAX_INTERACTIONS *2;
         }
         if(colors == null){
@@ -175,18 +184,22 @@ public class GeometryLoader {
             int ci = v.getColor();
 
             float[] newPos = new float[]{positions[pi * 3], positions[pi * 3+1], positions[pi * 3+2], 1.0f};
+            float[] newNor = new float[]{normals[ni * 3], normals[ni*3+1], normals[ni*3+2], 1.0f};
             if(bindShapeMatrix != null){
                 Matrix.multiplyMV(newPos, 0, bindShapeMatrix, 0, newPos, 0);
+                Matrix.multiplyMV(newNor, 0, bindShapeMatrix, 0, newNor, 0);
             }
+            //Matrix.multiplyMV(newPos, 0, CORRECTION, 0, newPos,0);
+            //Matrix.multiplyMV(newNor, 0, CORRECTION, 0, newNor,0);
 
             vertexArray[i * vertexStride] = newPos[0];
             vertexArray[i * vertexStride + 1] = newPos[1];
             vertexArray[i * vertexStride + 2] = newPos[2];
-            vertexArray[i * vertexStride + 3] = 1.0f;
-            vertexArray[i * vertexStride + 4] = normals[ni * 3];
-            vertexArray[i * vertexStride + 5] = normals[ni * 3 +1];
-            vertexArray[i * vertexStride + 6] = normals[ni * 3 +2];
-            vertexArray[i * vertexStride + 7] = 1.0f;
+            vertexArray[i * vertexStride + 3] = newPos[3];
+            vertexArray[i * vertexStride + 4] = newNor[0];
+            vertexArray[i * vertexStride + 5] = newNor[1];
+            vertexArray[i * vertexStride + 6] = newNor[2];
+            vertexArray[i * vertexStride + 7] = newNor[3];
             vertexArray[i * vertexStride + 8] = textures[ti * 2];
             vertexArray[i * vertexStride + 9] = textures[ti * 2 +1];
             if(colors != null) {
@@ -200,7 +213,7 @@ public class GeometryLoader {
                 vertexArray[i * vertexStride + 12] = -1.0f;
                 vertexArray[i * vertexStride + 13] = -1.0f;
             }
-            if(jointIds.length > 0) {
+            if(jointIds != null) {
                 float[] vJoints = jointIds[pi];
                 float[] vWeights = weights[pi];
                 vertexArray[i * vertexStride + 14] = vJoints[0];
