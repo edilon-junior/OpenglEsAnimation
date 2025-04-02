@@ -1,4 +1,4 @@
-package com.example.openglexemple.GameObjects;
+package com.example.openglexemple.GraphicObjects;
 
 import android.opengl.Matrix;
 
@@ -7,11 +7,10 @@ import com.example.openglexemple.Engine.Timer;
 
 public class Light {
     private final float[] lightColor = new float[]{1, 1, 1};
-    private final float[] lightPosInWordSpace = new float[]{1,1,1,1};
+    private final float[] lightPosInWordSpace = new float[]{10,10,1,1};
     private final float[] lightModelMatrix = new float[16];
     private float[] lightPosInEyeSpace = new float[4];
-
-    private float strength = 0.1f;
+    private float intensity = 0.5f;
 
     public Light(Transformation transformation){
         Matrix.setIdentityM(lightModelMatrix, 0);
@@ -19,9 +18,9 @@ public class Light {
     }
 
     public void setLightColor(float[] light){
-        this.lightColor[0] = light[0];
-        this.lightColor[1] = light[1];
-        this.lightColor[2] = light[2];
+        lightColor[0] = light[0];
+        lightColor[1] = light[1];
+        lightColor[2] = light[2];
     }
 
     public float[] getLightColor() {
@@ -32,11 +31,17 @@ public class Light {
         return lightPosInEyeSpace;
     }
 
-    public void setLightPosInEyeSpace(float[] mLightPosInEyeSpace) {
-        this.lightPosInEyeSpace = mLightPosInEyeSpace;
+    public void setLightPosInEyeSpace(float[] lightPosInEyeSpace) {
+        this.lightPosInEyeSpace = lightPosInEyeSpace;
     }
 
     public void update(Timer timer){
 
+    }
+    public void setIntensity(float intensity){
+        this.intensity = intensity;
+    }
+    public float[] getIntensity(){
+        return new float[]{intensity};
     }
 }
