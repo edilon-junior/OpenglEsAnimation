@@ -1,4 +1,4 @@
-package com.example.openglexemple.Engine;
+package com.example.openglexemple.Loader;
 
 import static android.opengl.GLES20.GL_TEXTURE_2D;
 
@@ -12,18 +12,24 @@ import android.opengl.GLUtils;
 import android.util.Log;
 
 import com.example.openglexemple.Animation.Animation;
+import com.example.openglexemple.Animation.Skeleton;
+import com.example.openglexemple.Engine.ShaderProgram;
 import com.example.openglexemple.GameObjects.DynamicModel;
 import com.example.openglexemple.GameObjects.Button;
-import com.example.openglexemple.ColladaParser.ColladaDataHandler;
+import com.example.openglexemple.Loader.ColladaParser.AnimationLoader;
+import com.example.openglexemple.Loader.ColladaParser.ColladaDataHandler;
 import com.example.openglexemple.GraphicObjects.Material;
 import com.example.openglexemple.GraphicObjects.Mesh;
-import com.example.openglexemple.PolygonParser;
+
+import com.example.openglexemple.Loader.ColladaParser.ControllerLoader;
+import com.example.openglexemple.Loader.ColladaParser.GeometryLoader;
+import com.example.openglexemple.Loader.ColladaParser.MaterialLoader;
+import com.example.openglexemple.Loader.ColladaParser.SkeletonLoader;
 import com.example.openglexemple.Utils.Saver;
 import com.example.openglexemple.GameObjects.SolidModel;
-import com.example.openglexemple.Utils;
-import com.example.openglexemple.WavefrontParser;
-import com.example.openglexemple.XmlParser.XmlNode;
-import com.example.openglexemple.XmlParser.XmlParser;
+import com.example.openglexemple.Utils.Utils;
+import com.example.openglexemple.Loader.XmlParser.XmlNode;
+import com.example.openglexemple.Loader.XmlParser.XmlParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -238,87 +244,63 @@ public class Loader {
 
         //############ PROCESS COLLADA DATA #####################
         assert colladaData != null: "error to create gameObject "+modelName;
-        XmlNode libraryGeometry = colladaData.getChild("library_geometries");
-        dynamicModels = new DynamicModel[libraryGeometry.getChildren("geometry").size()];
 
         XmlNode libraryVisualScenes = colladaData.getChild("library_visual_scenes");
-        XmlNode libraryEffects = colladaData.getChild("library_effects");
-        XmlNode libraryImages = colladaData.getChild("library_images");
-        XmlNode libraryMaterial = colladaData.getChild("library_materials");
-        XmlNode libraryGeometries = colladaData.getChild("library_geometries");
-        XmlNode libraryControllers = colladaData.getChild("library_controllers");
-        XmlNode libraryAnimations = colladaData.getChild("library_animations");
 
         XmlNode scene0 = libraryVisualScenes.getChild("visual_scene");
         List<XmlNode> scene0Children = scene0.getChildren("node");
-
+        dynamicModels = new DynamicModel[scene0Children.size()];
         int dmCounter = 0;
+
         for (XmlNode node : scene0Children) {
             System.out.println(TAG + " try create gameObject: " + node.getAttribute("id"));
 
             DynamicModel dynamicModel = new DynamicModel(node.getAttribute("id"));
-            XmlNode instanceGeometryNode = node.getChild("instance_geometry");
 
-            if(instanceGeometryNode == null){
-                //armature, camera and light objects
-                continue;
+            ColladaDataHandler colladaDataHandler = new ColladaDataHandler(node, colladaData);
+
+            XmlNode armature = colladaDataHandler.getArmatureNode();
+            XmlNode meshNode = colladaDataHandler.getMeshNode();
+            XmlNode controller = colladaDataHandler.getController();
+            XmlNode animationNode = colladaDataHandler.getAnimation();
+            Skeleton skeleton = null;
+            Animation animation = null;
+            float[][] jointsId = null;
+            float[][] weights = null;
+            float[] bindShapeMatrix = null;
+            //create skeleton and animation ---------------
+            if( controller != null) {
+                ControllerLoader controllerLoader = new ControllerLoader(controller);
+                jointsId = controllerLoader.getJointsId();
+                weights = controllerLoader.getVertexWeights();
+                bindShapeMatrix = controllerLoader.getBindShapeMatrix();
+                SkeletonLoader skeletonLoader = new SkeletonLoader(armature,
+                        meshNode, controllerLoader.getIbmMap(), controllerLoader.getJointIndices());
+                skeletonLoader.createSkeleton();
+                skeleton = skeletonLoader.getSkeleton();
+                AnimationLoader animationLoader = new AnimationLoader(animationNode, skeleton.getRootJointId());
+                animation = animationLoader.createAnimation();
             }
-
-            String instanceGeometryUrl = instanceGeometryNode.getAttribute("url").substring(1);
-            XmlNode instanceController = node.getChild("instance_controller");
-            String instanceControllerUrl;
-            XmlNode geometryNode = libraryGeometries.getChildWithAttribute("geometry", "id", instanceGeometryUrl);
-            XmlNode controllerNode;
-            XmlNode skin;
-            XmlNode armatureNode;
-            ColladaDataHandler colladaDataHandler = new ColladaDataHandler(node, geometryNode);
-            float[] transposeBSM = new float[16];
-            if(instanceController != null) {
-                instanceControllerUrl = instanceController.getAttribute("url").substring(1);
-                controllerNode = libraryControllers.getChildWithAttribute("controller","id",instanceControllerUrl);
-                skin = controllerNode.getChild("skin");
-                armatureNode = scene0.getChildWithAttribute("node","name",controllerNode.getAttribute("name"));
-
-                //create skeleton---------------------------
-                colladaDataHandler.setSkin(skin);
-                colladaDataHandler.setArmature(armatureNode);
-                colladaDataHandler.createSkeleton();
-                //create animations -----------------------
-                XmlNode mainAnimationNode =libraryAnimations.getChildWithAttribute("animation","name",controllerNode.getAttribute("name"));
-                float[] bindShapeMatrix = Utils.stringToFloatArray(skin.getChild("bind_shape_matrix").getData());
-                Animation mainAnimation = new Animation(mainAnimationNode, colladaDataHandler.getSkeleton().getRootJointId());
-                //transpose bind shape matrix
-                Matrix.transposeM(transposeBSM, 0, bindShapeMatrix, 0);
-                mainAnimation.setBindShapeMatrix(transposeBSM);
-                colladaDataHandler.setBindShapeMatrix(transposeBSM);
-                //-------------------- setup animation and skeleton ------------------------------
-                dynamicModel.setSkeleton(colladaDataHandler.getSkeleton());
-                dynamicModel.setAnimation(mainAnimation);
-            }
-            dynamicModel.fillJointTransforms();
+            dynamicModel.setSkeleton(skeleton);
+            dynamicModel.setAnimation(animation);
             //create mesh-------------------------------
-            Mesh mesh = colladaDataHandler.createMesh(transposeBSM);
+            XmlNode geometry = colladaDataHandler.getGeometry();
+            GeometryLoader geometryLoader = new GeometryLoader(geometry, jointsId, weights, bindShapeMatrix);
+            Mesh mesh = geometryLoader.createMesh();
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+/*
             Saver saver = new Saver(mesh.getName());
             saver.addVertices(mesh.getVertices(), mesh.getSemantics(), mesh.getVertexStrider());
             saver.addIndices(mesh.getIndices());
             saver.writeFileOnInternalStorage(context);
+*/
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
             //create material---------------------------
-            String materialTarget = instanceGeometryNode.getChild("bind_material")
-                    .getChild("technique_common")
-                    .getChild("instance_material")
-                    .getAttribute("target").substring(1);
-            XmlNode materialNode = libraryMaterial.getChildWithAttribute("material", "id", materialTarget);
-            String effectUrl = materialNode.getChild("instance_effect").getAttribute("url").substring(1);
-            XmlNode effectNode = libraryEffects.getChildWithAttribute("effect", "id", effectUrl);
-
-            Material material = colladaDataHandler.createMaterial(materialNode, effectNode);
+            MaterialLoader materialLoader = new MaterialLoader(colladaDataHandler.getMaterialNode(), colladaDataHandler.getEffect());
+            Material material = materialLoader.createMaterial();
+            String imageFileName = colladaDataHandler.findImage(material.getDiffuseMap());
             //load texture ----------------------------
-            //get image file name
-            String imageFileName = libraryImages.getChildWithAttribute("image", "id", material.getDiffuseMap()).getChild("init_from").getData();
-
             if (material.getDiffuseMap() != null) {
                 int diffuseId = loadTexture(modelName, imageFileName );
                 int[] texturesIds = new int[]{diffuseId};
