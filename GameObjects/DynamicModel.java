@@ -1,9 +1,9 @@
 package com.example.openglexemple.GameObjects;
 
-import static com.example.openglexemple.Constants.BYTES_PER_SHORT;
-import static com.example.openglexemple.Constants.DYNAMIC_FLOAT_UNIFORMS;
-import static com.example.openglexemple.Constants.DYNAMIC_INT_UNIFORMS;
-import static com.example.openglexemple.Constants.UNIFORM_JT_MATRIX;
+import static com.example.openglexemple.Utils.Constants.BYTES_PER_SHORT;
+import static com.example.openglexemple.Utils.Constants.DYNAMIC_FLOAT_UNIFORMS;
+import static com.example.openglexemple.Utils.Constants.DYNAMIC_INT_UNIFORMS;
+import static com.example.openglexemple.Utils.Constants.UNIFORM_JT_MATRIX;
 
 import android.opengl.GLES30;
 
@@ -11,7 +11,9 @@ import com.example.openglexemple.Animation.Animation;
 import com.example.openglexemple.Animation.Joint;
 import com.example.openglexemple.Animation.Skeleton;
 import com.example.openglexemple.Engine.Camera;
-import com.example.openglexemple.Constants;
+import com.example.openglexemple.GraphicObjects.Light;
+import com.example.openglexemple.Loader.XmlParser.XmlNode;
+import com.example.openglexemple.Utils.Constants;
 import com.example.openglexemple.Engine.Input;
 import com.example.openglexemple.GraphicObjects.Material;
 import com.example.openglexemple.GraphicObjects.Mesh;
@@ -20,7 +22,7 @@ import com.example.openglexemple.GraphicObjects.Scene;
 import com.example.openglexemple.Engine.ShaderProgram;
 import com.example.openglexemple.Engine.Timer;
 import com.example.openglexemple.Engine.Transformation;
-import com.example.openglexemple.Utils;
+import com.example.openglexemple.Utils.Utils;
 
 import java.nio.FloatBuffer;
 import java.util.List;
@@ -108,29 +110,10 @@ public class DynamicModel extends GameObject {
                 0, 1, 0, 0,
                 0, 0, 1, 0,
                 0, 0, 0, 1};
-        animation.applyPoseToJoints(currentPose, skeleton.getRootJoint(), tempMatrix, jointTransforms, skeleton.getRootJoint().getIBM());
+        animation.applyPoseToJoints(currentPose, skeleton.getRootJoint(), tempMatrix, jointTransforms, skeleton);
         //animation.applyPoseToJoints2(currentPose, skeleton, jointTransforms);
     }
 
-    public void fillJointTransforms(){
-        //jointTransformsBuffer = Utils.createFloatBuffer(Constants.MAX_JOINTS_TRANSFORMS * 16);
-        //Utils.fillArrayWithIdentityMatrix(jointTransformsBuffer);
-        Utils.fillArrayWithIdentityMatrix(jointTransforms);
-    }
-
-    public float[][] getJointTransforms(){
-        //case this object has no animation
-        //if(skeleton != null) {
-           // addJointsToArray(skeleton.getRootJoint(), jointTransforms);
-        //}
-        return jointTransforms;
-    }
-    private void addJointsToArray(Joint headJoint, float[][] jointMatrices) {
-        jointMatrices[headJoint.getIndex()] = headJoint.getAnimatedTransform();
-        for (Joint childJoint : headJoint.getChildren()) {
-            addJointsToArray(childJoint, jointMatrices);
-        }
-    }
     @Override
     public void render(Scene scene, Transformation transformation, Camera camera){
         for(Mesh mesh: this.getMeshList()) {
@@ -156,8 +139,7 @@ public class DynamicModel extends GameObject {
                         transformation.getViewMatrix(), mMVPMatrix,
                         light.getLightPosInEyeSpace(), light.getLightColor(),
                         camera.getPosition().toFloat(), material.getEmission(),
-                        material.getRefraction(), scene.getIorAmbient()
-                        );
+                        light.getIntensity(),scene.getIorAmbient(),material.getRefraction());
 
                 //pass animation joints transforms
 
