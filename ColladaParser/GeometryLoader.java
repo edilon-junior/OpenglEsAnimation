@@ -13,9 +13,9 @@ import java.util.List;
 public class GeometryLoader {
 
     private static final float[] CORRECTION = new float[16];
-    XmlNode geometry;
-    XmlNode meshNode;
-    XmlNode trianglesNode;
+    private final XmlNode geometry;
+    private final XmlNode meshNode;
+    private final XmlNode trianglesNode;
     private final String meshName;
     private String materialId;
     private String[] semantics;
@@ -57,9 +57,8 @@ public class GeometryLoader {
         mesh.setMaterialId(materialId);
         mesh.setVertexStrider(vertexStride);
         mesh.setHomogeneous(true);
-        if(jointIds != null){
-            mesh.setMaxInfluences(Constants.MAX_INTERACTIONS);
-        }
+        mesh.setMaxInfluences(Constants.MAX_INTERACTIONS);
+
         return mesh;
     }
 
@@ -115,7 +114,6 @@ public class GeometryLoader {
                 colorIndex = Integer.parseInt(attributeIndices[i * attribStride + 3]);
             }
             Vertex t = processVertex(positionIndex, normalIndex, texCoordIndex, colorIndex);
-            //System.out.println("geometryLoader vertex: " +t);
         }
     }
     private Vertex processVertex(int pIndex, int nIndex, int tIndex, int cIndex){
@@ -164,15 +162,14 @@ public class GeometryLoader {
     }
     private void createVertexArray(){
         int mod = 0;
-        if(jointIds!= null) {
-            vertexStride += Constants.MAX_INTERACTIONS *2;
-        }
+
+        vertexStride += Constants.MAX_INTERACTIONS *2;
+
         if(colors == null){
             semanticsList.add("COLOR");
         }
         semantics = semanticsList.toArray(new String[0]);
 
-        System.out.println("geometryLoader strider : "+vertexStride);
         vertexArray = new float[verticesList.size() * vertexStride];
         for (int i = 0; i < verticesList.size(); i++) {
             Vertex v  = verticesList.get(i);
@@ -224,6 +221,16 @@ public class GeometryLoader {
                 vertexArray[i * vertexStride + 19] = vWeights[1];
                 vertexArray[i * vertexStride + 20] = vWeights[2];
                 vertexArray[i * vertexStride + 21] = vWeights[3];
+            }
+            else {
+                vertexArray[i * vertexStride + 14] = -1;
+                vertexArray[i * vertexStride + 15] = -1;
+                vertexArray[i * vertexStride + 16] = -1;
+                vertexArray[i * vertexStride + 17] = -1;
+                vertexArray[i * vertexStride + 18] = -1;
+                vertexArray[i * vertexStride + 19] = -1;
+                vertexArray[i * vertexStride + 20] = -1;
+                vertexArray[i * vertexStride + 21] = -1;
             }
         }
     }
