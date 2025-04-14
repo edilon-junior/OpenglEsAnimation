@@ -13,13 +13,12 @@ import java.util.List;
 public class GeometryLoader {
 
     private static final float[] CORRECTION = new float[16];
-    private final XmlNode geometry;
     private final XmlNode meshNode;
     private final XmlNode trianglesNode;
     private final String meshName;
     private String materialId;
     private String[] semantics;
-    private List<String> semanticsList = new ArrayList<>();
+    private final List<String> semanticsList = new ArrayList<>();
     private final List<Vertex> verticesList = new ArrayList<>();
     float[] vertexArray;
     float[] positions;
@@ -31,11 +30,12 @@ public class GeometryLoader {
     private final float[][] weights;
     private final List<Integer> indicesList = new ArrayList<>();
     int vertexStride = 0;
-    private float[] bindShapeMatrix;
+    private final float[] bindShapeMatrix;
+    private final float[] restTransform;
 
-    public GeometryLoader(XmlNode geometry, float[][] jointIds, float[][] weights, float[] bindShapeMatrix){
-        this.geometry = geometry;
+    public GeometryLoader(XmlNode geometry, float[][] jointIds, float[][] weights, float[] bindShapeMatrix, float[] restTransform){
         this.bindShapeMatrix = bindShapeMatrix;
+        this.restTransform = restTransform;
         meshNode = geometry.getChild("mesh");
         meshName = geometry.getAttribute("name");
         trianglesNode = meshNode.getChild("triangles");
@@ -58,7 +58,7 @@ public class GeometryLoader {
         mesh.setVertexStrider(vertexStride);
         mesh.setHomogeneous(true);
         mesh.setMaxInfluences(Constants.MAX_INTERACTIONS);
-
+        mesh.setBindShapeMatrix(bindShapeMatrix);
         return mesh;
     }
 
@@ -109,7 +109,7 @@ public class GeometryLoader {
             int positionIndex = Integer.parseInt(attributeIndices[i * attribStride]);
             int normalIndex = Integer.parseInt(attributeIndices[i * attribStride + 1]);
             int texCoordIndex = Integer.parseInt(attributeIndices[i * attribStride + 2]);
-            int colorIndex = -1;
+            int colorIndex = 0;
             if(attribStride > 3) {
                 colorIndex = Integer.parseInt(attributeIndices[i * attribStride + 3]);
             }
@@ -161,8 +161,6 @@ public class GeometryLoader {
         }
     }
     private void createVertexArray(){
-        int mod = 0;
-
         vertexStride += Constants.MAX_INTERACTIONS *2;
 
         if(colors == null){
@@ -185,6 +183,9 @@ public class GeometryLoader {
             if(bindShapeMatrix != null){
                 Matrix.multiplyMV(newPos, 0, bindShapeMatrix, 0, newPos, 0);
                 Matrix.multiplyMV(newNor, 0, bindShapeMatrix, 0, newNor, 0);
+            }else{
+                Matrix.multiplyMV(newPos, 0, restTransform, 0, newPos, 0);
+                Matrix.multiplyMV(newNor, 0, restTransform, 0, newNor, 0);
             }
             //Matrix.multiplyMV(newPos, 0, CORRECTION, 0, newPos,0);
             //Matrix.multiplyMV(newNor, 0, CORRECTION, 0, newNor,0);
