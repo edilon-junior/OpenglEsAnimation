@@ -33,10 +33,9 @@ public class MousePicker {
         if(input.isTouch()==false){
             return;
         }
-        this.currentRay = calcMouseRay(input, viewMatrix, projMatrix);
-        Vector3f direction = currentRay.getSub(camera.getPosition());
-        origin.set(camera.getPosition());
-        this.line.set(origin, direction);
+        currentRay = calcMouseRay(input, viewMatrix, projMatrix);
+        origin.set(0,0,0);
+        line.set(origin, currentRay);
     }
     private Vector3f calcMouseRay(Input input, float[] viewMatrix, float[] projMatrix){
         float[] normalizedOrigin = getNormalizedDeviceCoords(input);
